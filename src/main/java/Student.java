@@ -16,9 +16,11 @@ public class Student extends Person implements Specializable {
 
     public static class Fields extends Person.Fields {
         public static final String GROUP = "group_name";
+        public static final String COURSE = "course";
+        public static final String FAVORITE_SUBJECT = "favorite_subject";
     }
     public static class Queries {
-        public static final String SAVE_QUERY = "INSERT INTO student (last_name, age, group_name, course, favorite_subject) VALUES ('%s', %d, '%s', %d, '%s')";
+        public static final String SAVE_QUERY = "INSERT INTO student ( last_name, age, group_name, course, favorite_subject) VALUES ('%s', %d, '%s', %d, '%s')";
         public static final String FILTERED_QUERY = "select * from " + TABLE_NAME + " where 1=1 ";
     }
 
@@ -26,16 +28,12 @@ public class Student extends Person implements Specializable {
     protected int course;
     protected String favoriteSubject;
 
-    //вызов конструктора Student
     public Student() {
         super();
     }
 
-    //обработка ошибочных данных
     public Student(String[] info) {
-        // считывание из person
         super(info);
-        //Проверка
         if (info.length <= 5) {
             throw new IllegalArgumentException("Not enough parameters for student");
         } else {
@@ -45,40 +43,31 @@ public class Student extends Person implements Specializable {
         }
     }
 
-    //Возвращение значения заданного поля
     public String getGroup() {
         return group;
     }
-
-    //Передача аргумента в качестве строки и присвоение значения поля
     public void setGroup(String group) {
         this.group = group;
     }
 
-    //Возвращение значения заданного поля
     public int getCourse() {
         return course;
     }
-
-    //Передача аргумента в качестве строки и присвоение значения поля
     public void setCourse(int course) {
         this.course = course;
     }
 
-    //Возвращение значения заданного поля
-    public String favoriteSubject() {
+    public String getFavoriteSubject() {
         return favoriteSubject;
     }
-
-    //Передача аргумента в качестве строки и присвоение значения поля
-    public void favoriteSubject(String favoriteSubject) {
+    public void setFavoriteSubject(String favoriteSubject) {
         this.favoriteSubject = favoriteSubject;
     }
 
     public void saveToDB(Connection con) throws SQLException {
         Statement statement = con.createStatement();
         statement.executeUpdate(String.format(Queries.SAVE_QUERY,
-                lastname, age, group, course, favoriteSubject
+                lastName, age, group, course, favoriteSubject
         ));
         statement.close();
     }
@@ -88,36 +77,46 @@ public class Student extends Person implements Specializable {
         ResultSet resultSet = statement.executeQuery(Queries.FILTERED_QUERY);
         List<Student> students = new ArrayList<>();
         while (resultSet.next()){
-            Student student = new Student();
-            student.setCourse(resultSet.getInt("course"));
-            student.setLastname(resultSet.getString("last_name"));
-            /*student.setCourse(resultSet.getInt("course"));
-            student.setCourse(resultSet.getInt("course"));*/
-            students.add(student);
+            students.add(initializeStudent(resultSet));
         }
         return students;
     }
 
+    public static List<Student> getFilteredStudents(Connection con, String restrictions) throws SQLException {
+        Statement statement = con.createStatement();
+        ResultSet resultSet = statement.executeQuery(Queries.FILTERED_QUERY + restrictions);
+        List<Student> students = new ArrayList<>();
+        while (resultSet.next()){
+            students.add(initializeStudent(resultSet));
+        }
+        return students;
+    }
 
-    public static List<Student> getFilteredStudentsByLastName(Connection con, String lastName) throws SQLException {
+    /*public static List<Student> getFilteredStudentsByLastName(Connection con, String lastName) throws SQLException {
         Statement statement = con.createStatement();
         ResultSet resultSet = statement.executeQuery(addLikeRestriction(Queries.FILTERED_QUERY, Fields.LAST_NAME,lastName));
         List<Student> students = new ArrayList<>();
         while (resultSet.next()){
-            Student student = new Student();
-            student.setCourse(resultSet.getInt(Fields.LAST_NAME));
-            student.setLastname(resultSet.getString(Fields.LAST_NAME));
-            /*student.setCourse(resultSet.getInt("course"));
-            student.setCourse(resultSet.getInt("course"));*/
-            students.add(student);
+            students.add(initializeStudent(resultSet));
         }
         return students;
+    }*/
+
+    private static Student initializeStudent(ResultSet resultSet) throws SQLException {
+        Student student = new Student();
+        student.setCourse(resultSet.getInt(Fields.COURSE));
+        student.setLastName(resultSet.getString(Fields.LAST_NAME));
+        student.setAge(resultSet.getInt(Fields.AGE));
+        student.setGroup(resultSet.getString(Fields.GROUP));
+        student.setFavoriteSubject(resultSet.getString(Fields.FAVORITE_SUBJECT));
+        student.setId(resultSet.getInt(Fields.ID));
+        return student;
     }
 
 
     @Override
     public String toString() {
-        return super.toString() + "This person is a teacher with a " + group + " years of experience in " + course + "//rjvv"
-                + favoriteSubject + "dsd";
+        return super.toString() + "This person is a student with a " + group + " course " + course + " favorite sibject is "
+                + favoriteSubject ;
     }
 }
